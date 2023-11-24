@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        function finnbuzz(input){
+            if(isNaN(input)) return "not a number bro";
+            else if(input%3==0) return "finn";
+            else if(input%5==0) return "buzz";
+            else if(input%3==0&&input%5==0) return "finnbuzz";
+            else return input;
+        }
+        finnbuzz("hello");
+        finnbuzz(6);
+        finnbuzz(10);
+        finnbuzz(30);
+        finnbuzz(2);
+
+    </script>
+</body>
+</html>
