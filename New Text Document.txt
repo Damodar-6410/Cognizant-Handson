@@ -1,0 +1,473 @@
+package com.spring.bo;
+
+import com.spring.model.Student;
+import org.springframework.stereotype.Component;
+ 
+//use appropriate annotation to make this class as component class
+@Component
+public class StudentBO {
+	
+	public float calculateFee(Student obj) {
+	    float rent = obj.getHostel().getRent();
+        char grade = obj.getGrade();
+          float retunValue=0;
+        if (grade == 'C' || grade == 'F') {
+            retunValue= rent;
+        }else{
+           int discountPercentage = obj.getHostel().getFeesDiscount().get(String.valueOf(grade));
+            double discountAmount = rent * discountPercentage / 100.0;
+           retunValue= rent - discountAmount;
+            
+        }
+            return retunValue;
+       
+	}
+	
+	
+
+}
+
+
+
+
+package com.spring.config;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ComponentScan;
+//Use appropriate annotation 
+@ComponentScan(basePackages = {"com.spring.config","com.spring.bo","com.spring.exception","com.spring.main","com.spring.model","com.spring.service"})
+@Configuration
+public class ApplicationConfig {
+
+	
+}
+
+
+
+
+
+
+package com.spring.exception;
+
+public class InvalidGradeException extends Exception {
+
+	public InvalidGradeException(String msg) {
+
+		super(msg);
+	}
+
+}
+
+
+
+
+
+package com.spring.main;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import com.spring.exception.InvalidGradeException;
+import com.spring.service.StudentService;
+import com.spring.config.ApplicationConfig;
+import java.util.Scanner;
+
+public class Driver {
+
+	public static void main(String[] args) {
+
+	 AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ApplicationConfig.class);
+
+        // Get the StudentService bean
+        StudentService studentService = context.getBean(StudentService.class);
+
+        // Get user inputs for student and hostel details
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter student name: ");
+        String name = scanner.nextLine();
+
+        System.out.print("Enter admission number: ");
+        String admissionNo = scanner.nextLine();
+
+        System.out.print("Enter grade: ");
+        char grade = scanner.nextLine().charAt(0);
+
+        System.out.print("Enter hostel name: ");
+        String hostelName = scanner.nextLine();
+
+        System.out.print("Enter room rent: ");
+        float rent = Float.parseFloat(scanner.nextLine());
+
+        scanner.close();
+
+        // Calculate the fee
+        try {
+            float calculatedFee = studentService.calculateFee(name, admissionNo, grade, hostelName, rent);
+            System.out.println("Calculated fee: Rs " + calculatedFee);
+        } catch (InvalidGradeException e) {
+            System.out.println("Invalid grade: " + e.getMessage());
+        }
+
+        context.close();
+		
+		}
+
+}
+
+
+
+
+
+package com.spring.model;
+import java.util.Map;
+import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
+
+@PropertySource("classpath:/feesDiscountDetails.properties")
+//pojo class with required attributes,getters and setters 
+//use appropriate annotation to make this class as component class
+@Component
+public class FeesDiscountDetails {
+	
+
+	//fill the code
+	 @Value("#{${feesDiscount.map}}")
+	 private  Map<String,Integer> feesDiscount;
+
+	public Map<String, Integer> getFeesDiscount() {
+		return feesDiscount;
+	}
+
+	public void setFeesDiscount(Map<String, Integer> feesDiscount) {
+		this.feesDiscount = feesDiscount;
+	}
+
+	
+}
+
+
+
+
+
+
+package com.spring.model;
+
+import org.springframework.stereotype.Component;
+//pojo class with required attributes,getters and setters 
+//use appropriate annotation to make this class as component class
+@Component
+public class Hostel {
+
+	private String hostelName;
+	private float rent;	
+
+	public String getHostelName() {
+		return hostelName;
+	}
+	public void setHostelName(String hostelName) {
+		this.hostelName = hostelName;
+	}
+	public float getRent() {
+		return rent;
+	}
+	public void setRent(float rent) {
+		this.rent = rent;
+	}
+}
+
+
+
+
+
+package com.spring.model;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+//pojo class with required attributes,getters and setters 
+//use appropriate annotation to make this class as component class
+@Component
+public class Student {
+
+	private String name;
+	private String admissionNo;
+	private char grade;
+	private Hostel hostel;
+	//fill the code
+	@Autowired
+	public Student(Hostel hostel) {
+		super();
+		this.hostel = hostel;
+	}
+	public Hostel getHostel() {
+		return hostel;
+	}
+	public void setHostel(Hostel hostel) {
+		this.hostel = hostel;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getAdmissionNo() {
+		return admissionNo;
+	}
+	public void setAdmissionNo(String admissionNo) {
+		this.admissionNo = admissionNo;
+	}
+	public char getGrade() {
+		return grade;
+	}
+	public void setGrade(char grade) {
+		this.grade = grade;
+	}
+	
+}
+
+
+
+
+
+package com.spring.service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import com.spring.bo.StudentBO ;
+import com.spring.exception.InvalidGradeException;
+import com.spring.model.Student;
+import com.spring.model.Hostel;
+//use appropriate annotation to make this class as component class
+@Component
+public class StudentService {	
+
+	public StudentBO getStudentBOObj() {
+		return studentBOObj;
+	}
+
+	public void setStudentBOObj(StudentBO studentBOObj) {
+		this.studentBOObj = studentBOObj;
+	}
+
+	private StudentBO studentBOObj;
+
+	//fill the code
+	@Autowired
+	public StudentService(StudentBO studentBOObj) {
+		super();
+		this.studentBOObj = studentBOObj;
+	}
+
+	public float calculateFee(String name,String admissionNo,char grade,String hostelName,float rent) throws InvalidGradeException{
+		if (grade != 'O' && grade != 'D' && grade != 'A' && grade != 'B' && grade != 'C' && grade != 'F') {
+            throw new InvalidGradeException("Invalid Grade");
+        }
+
+        Hostel hostel = new Hostel();
+        hostel.setHostelName(hostelName);
+        hostel.setRent(rent);
+
+        Student student = new Student(hostel);
+        student.setName(name);
+        student.setAdmissionNo(admissionNo);
+        student.setGrade(grade);
+        return studentBOObj.calculateFee(student);
+	}
+
+}
+
+
+
+
+NIA Educational institutions have hostel facility in their campus, They offer a discount for their students to pay the hostel room rent depends on the grade they scored in their exam. Help them by developing an application to calculate the fee.
+
+Service 1: Calculate Hostel fee
+
+Student class with the below private attributes is provided as a part of code skeleton
+
+name
+
+String
+
+admissionNo
+
+String
+
+grade
+
+char
+
+hostel
+
+Hostel
+
+Getter and setter methods for all the above attributes are provided as a part of code skeleton. Use appropriate spring annotation above the class to denote the class as component. One argument constructor is provided as the part the code skeleton. The Hostel object should be autowired above the constructor in Student class via annotations.
+
+Hostel class with the below private attributes is provided as a part of code skeleton
+
+hostelName
+
+String
+
+rent
+
+float
+
+Getter and setter methods for all the above attributes are provided as a part of code skeleton. Use appropriate spring annotation above the class to denote the class as component.
+
+FeesDiscountDetails class with the below private attributes is provided as a part of code skeleton
+
+feesDiscount
+
+Map<String,Integer>
+
+Getter and setter methods for all the above attributes are provided as a part of code skeleton. Use appropriate spring annotation above the class to denote the class as component.
+
+The value for feesDiscount.map is available in feesDiscountDetails.properties file. Fetch the value from the property file and assign it to the Map feesDiscount in FeesDiscountDetails class. The values for this Map should be injected through @value annotation. Do not change the value of feesDiscount in the property file.
+
+Key - grade (String)
+
+Value - Discount Percentage (Integer)
+
+O
+
+50
+
+D
+
+40
+
+A
+
+30
+
+B
+
+20
+
+Create a class called ApplicationConfig that has the required annotations for scanning and registering the bean definitions.
+
+Overview of Service 1:
+
+Write a method public double calculateFee (Student obj) in StudentBO class which will return the discounted fee, this method should get the discount percent based on the feesDiscount , which is available in the map and calculate the discounted hostel fee . Reduce the discount from rent to calculate the discounted fee and return the same.
+
+For Example:
+
+If the Grade is A and rent is 5000 then,
+
+fee = rent-(rent*30/100);
+
+fee= 5000-(5000*30/100);==> 3500.0
+
+Note: Students who got Grade 'C' and 'F' have to pay the full rent. No need to calculate the discount
+
+Create a class called Driver with the main method and get the inputs for Student and Hostel details from the user. Get the StudentService class object by loading ApplicationConfig class and invoke the method calculateFee (name, admissionNo, grade, hostelName, rent) which is in the StudentService class to perform the implementation. Display the calculated fee which is returned from calculateFee (Student obj)method in StudentBO class.
+
+Technical Specifications:
+
+Component Name
+
+Method Name
+
+Input
+
+Output
+
+Exception
+
+StudentService
+
+float calculateFee
+
+String name,String admissionNo,char grade,String hostelName,float rent
+
+float - calculatedFee
+
+InvalidGradeException
+
+This Exception to be caught and thrown back to Main class
+
+StudentBO
+
+float calculateFee
+
+Student obj
+
+float - calculatedFee
+
+ApplicationConfig
+
+Contains all the configurations related to Service
+
+Business Rules & Validations:
+
+In StudentService class include the following private attribute. Use appropriate spring annotation above the class to denote the class as component.
+
+private StudentBO studentBOObj;
+
+Getter and setter method for the above attribute is provided as a part of code skeleton. One argument constructor is provided as the part of code skeleton. The StudentBO object should be autowired above the constructor via annotations.
+
+In this StudentService class, the method public float calculateFee ( String name, String admissionNo, char grade, String hostelName, float rent )accepts name, admissionNo, grade, hostelName, rent as the arguments .Validate the grade [ grade values should be 'O', 'D', 'A', 'B', 'C', 'F'] if the grade is valid get the Student object and set the name, admissionNo, grade, hostelName, rent in that object. In case the grade is not valid, a user-defined Exception InvalidGradeException should be thrown with message "Invalid Grade".
+
+If the validation is done call the method calculateFee(Student obj) in StudentBO class and perform the implementation.
+
+Limitations and Constraints:
+
+Do not change the Class name/Package name/Method signature/Attribute name provided as part of the code skeleton.
+
+The feesDiscount attribute should be declared as a MAP with the given value and should be injected using @Value annotation above the attribute.
+
+All of the above mentioned java classes to be configured as component class using appropriate spring annotation.
+
+Hostel should be injected into Student class via constructor based Injection using appropriate annotation.
+
+StudentBO should be injected into StudentService class via constructor based Injection using annotation.
+
+Sample Input Output 1:
+
+Enter the student name:
+
+Rahul
+
+Enter the admission number:
+
+PS2902010
+
+Enter the grade:
+
+O
+
+Enter the hostel details
+
+Enter the hostel name:
+
+NIA
+
+Enter the room rent:
+
+5000
+
+Hostel fee is Rs: 2500.0
+
+Sample Input Output 2:
+
+Enter the student name:
+
+Rahul
+
+Enter the admission number:
+
+PS2902010
+
+Enter the grade:
+
+S
+
+Enter the hostel details
+
+Enter the hostel name:
+
+NIA
+
+Enter the room rent:
+
+5000
+
+Invalid Grade
